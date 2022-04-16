@@ -1,0 +1,8 @@
+<launch>
+    <group ns="robot_manager">
+        <rosparam file="$(find robot_manager)/config/robot_manager_node.yaml" />
+    </group>
+    
+    <node pkg="robot_manager" type="robot_manager_node.py" name="robot_manager" output="screen"/>
+
+</launch>
