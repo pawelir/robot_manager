@@ -2,7 +2,7 @@
 
 from geometry_msgs.msg import Twist
 from math import pi
-from std_msgs.msg import Float64, Float64MultiArray
+from std_msgs.msg import Float64, Int32MultiArray
 import rospy
 
 class RobotManagerNode():
@@ -22,10 +22,10 @@ class RobotManagerNode():
                                               Float64,
                                               queue_size=1)
         self.pub_cmd_vel_epos = rospy.Publisher('/my_robot/epos_cmd_vel',
-                                            Float64MultiArray,
+                                            Int32MultiArray,
                                             queue_size=1)
         self.cmd_vel_sub = rospy.Subscriber('/cmd_vel', Twist, self._update_robot_velocity)
-        self.epos_velocity_msg = Float64MultiArray()
+        self.epos_velocity_msg = Int32MultiArray()
 
 
     def _load_params(self) -> None:
@@ -37,15 +37,16 @@ class RobotManagerNode():
         self.publish_controller_commands()
 
     def calculate_wheels_veocity(self, V: float, w: float) -> None:
-        self.Vl = (2*V - w*self.track_of_wheels) / (2*self.wheel_radius)                                    
-        self.Vr = (2*V + w*self.track_of_wheels) / (2*self.wheel_radius)
-        self.epos_velocity_msg.data = [self.Vl/(2*pi)*60, self.Vr/(2*pi)*60]        
+        self.wheel_speed_left = (2*V - w*self.track_of_wheels) / (2*self.wheel_radius)                                    
+        self.wheel_speed_right = (2*V + w*self.track_of_wheels) / (2*self.wheel_radius)
+        self.epos_velocity_msg.data = [int(self.wheel_speed_left/(2*pi)*60),
+                                       int(self.wheel_speed_right/(2*pi)*60)] #EPOS controller accept rpm
 
     def publish_controller_commands(self) -> None:
-        self.pub_cmd_vel_fl.publish(self.Vl)
-        self.pub_cmd_vel_rl.publish(self.Vl)
-        self.pub_cmd_vel_fr.publish(self.Vr)
-        self.pub_cmd_vel_rr.publish(self.Vr)
+        self.pub_cmd_vel_fl.publish(self.wheel_speed_left)
+        self.pub_cmd_vel_rl.publish(self.wheel_speed_left)
+        self.pub_cmd_vel_fr.publish(self.wheel_speed_right)
+        self.pub_cmd_vel_rr.publish(self.wheel_speed_right)
         self.pub_cmd_vel_epos.publish(self.epos_velocity_msg) 
 
 if __name__=="__main__":
